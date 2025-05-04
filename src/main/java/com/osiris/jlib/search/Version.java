@@ -15,18 +15,20 @@ public class Version {
         String[] arrCurrent = cleanAndSplitByDots(currentVersion);
         String[] arrLatest = cleanAndSplitByDots(latestVersion);
 
-        if (arrLatest.length == arrCurrent.length) {
-            String latest, current;
-            for (int i = 0; i < arrLatest.length; i++) {
-                latest = arrLatest[i];
-                current = arrCurrent[i];
-                if (latest.equals(current)) continue;
-                else return isFirstBigger(latest, current);
+        int minLength = Math.min(arrCurrent.length, arrLatest.length);
+        for (int i = 0; i < minLength; i++) {
+            if (!arrCurrent[i].equals(arrLatest[i])) {
+                return isFirstBigger(arrLatest[i], arrCurrent[i]);
             }
-            return false; // All are the same
-        } else
-            return arrLatest.length > arrCurrent.length;
+        }
 
+        // If numeric parts are equal, compare lengths (ignoring build metadata)
+        if (arrCurrent.length != arrLatest.length) {
+            return arrLatest.length > arrCurrent.length;
+        }
+
+        // If numeric parts and lengths are equal, consider build metadata
+        return currentVersion.compareTo(latestVersion) < 0;
     }
 
     /**
@@ -54,14 +56,23 @@ public class Version {
 
     public static String[] cleanAndSplitByDots(String version) {
         Objects.requireNonNull(version);
-        version = version.trim() // Remove left and right spaces
-                .replaceAll("[^0-9.]", ""); // Remove everything except numbers and dots
-        while (version.contains("..")) {
-            // 0.0..1 -> 0.0.1, or 0...1 -> 0.1, works with as many dots as you want
-            version = version.replaceAll("\\.\\.", ".");
+        version = version.trim();
+
+        // Extract numeric build number from something like (b116-abcd)
+        int idx = version.indexOf("(b");
+        if (idx != -1) {
+            int endIdx = version.indexOf(")", idx);
+            if (endIdx != -1) {
+                String build = version.substring(idx + 2, endIdx).split("-")[0]; // get only numeric part
+                version = version.substring(0, idx).trim() + "." + build; // append build number as new segment
+            }
         }
+        // Strip out non-numeric and non-dot characters
+        version = version.replaceAll("[^0-9.]", "");
+        // Replace multiple dots with a single one
+        while (version.contains("..")) version = version.replace("..", ".");
         if (version.isEmpty()) return new String[]{"0"};
-        return version.split("\\."); // Split string by .
+        return version.split("\\.");
     }
 
     public static boolean isFirstBigger(String num1, String num2) {
