@@ -8,9 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 public class VersionTest {
     @Test
     void testStandardVersions() {
-        String current = "2.2.4";
+        String current = "2.2.6";
         String latest = "2.2.5";
-        assertTrue(Version.isLatestBigger(current, latest));
+        assertFalse(Version.isLatestBigger(current, latest));
         assertTrue(Version.isLatestBiggerOrEqual(current, latest));
         assertTrue(Version.isLatestBiggerOrEqual(latest, latest));
         assertFalse(Version.isLatestBigger(latest, latest));
